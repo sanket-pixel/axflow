@@ -1,0 +1,10 @@
+axflow:
+  model_dir: yolov8s-ir/1
+  num_cores: 1
+
+preprocessing:
+  resize_mode: stretch
+  normalize: false
+  input_is_bgr: true
+
+postprocessing:
