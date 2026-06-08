@@ -74,19 +74,26 @@ TEST_F(Yolov8EndToEnd, InputQuantParamsMatchManifest) {
 }
 
 TEST_F(Yolov8EndToEnd, OutputShapesMatchManifest) {
-  Device dev;
-  Model m(dev, load_cfg());
+    Device dev;
+    Model m(dev, load_cfg());
 
-  // outputs are dequantized to dense NCHW (padding stripped).
-  // shapes here match the *unpadded* sizes in manifest.json.
-  const std::vector<std::vector<int>> expected = {
-      {1, 1, 128, 160},  {1, 1, 64, 80},  {1, 1, 32, 40},  {1, 1, 16, 20},
-      {1, 64, 128, 160}, {1, 64, 64, 80}, {1, 64, 32, 40}, {1, 64, 16, 20},
-  };
+    // ground truth from chip (DEBUG_PrintAllOutputs):
+    //   0-3: box branches  (C=64)
+    //   4-7: score branches (C=1, padded from 64)
+    const std::vector<std::vector<int>> expected = {
+        {1, 64, 128, 160},
+        {1, 64,  64,  80},
+        {1, 64,  32,  40},
+        {1, 64,  16,  20},
+        {1,  1, 128, 160},
+        {1,  1,  64,  80},
+        {1,  1,  32,  40},
+        {1,  1,  16,  20},
+    };
 
-  auto outs = m.run();
-  ASSERT_EQ(outs.size(), expected.size());
-  for (std::size_t i = 0; i < outs.size(); ++i) {
-    EXPECT_EQ(outs[i].shape, expected[i]) << "output " << i;
-  }
+    auto outs = m.run();
+    ASSERT_EQ(outs.size(), expected.size());
+    for (std::size_t i = 0; i < outs.size(); ++i) {
+        EXPECT_EQ(outs[i].shape, expected[i]) << "output " << i;
+    }
 }
