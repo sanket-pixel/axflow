@@ -25,12 +25,30 @@ std::vector<std::array<size_t, 2>> padding_of(const axrTensorInfo &t) {
 Tensor dequantize(const axrTensorInfo &info,
                   const std::vector<int8_t> &int8_buf,
                   const std::string &name) {
+  // dequantize int8 NHWC (padded, chip layout) → float32 NCHW (dense).
+  //
+  // Assumes:
+  //   - info.ndims == 4
+  //   - layout is NHWC (the only layout supported by AxRuntime today)
+  //   - padding may exist on any dim; we strip it
+  //
+  // For non-4D tensors (e.g. classifier heads with shape [N, num_classes])
+  // this will throw. v2 will support arbitrary ranks and layouts.
+  if (info.ndims != 4) {
+    throw std::runtime_error(
+        "axflow::dequantize: only 4D tensors supported, got " +
+        std::to_string(info.ndims) + " dims for '" + name + "'");
+  }
   // unpadded dimensions
   const int N = info.dims[0] - info.padding[0][0] - info.padding[0][1];
   const int H = info.dims[1] - info.padding[1][0] - info.padding[1][1];
   const int W = info.dims[2] - info.padding[2][0] - info.padding[2][1];
   const int C = info.dims[3] - info.padding[3][0] - info.padding[3][1];
-
+  if (N <= 0 || H <= 0 || W <= 0 || C <= 0) {
+    throw std::runtime_error(
+        "axflow::dequantize: invalid unpadded shape for '" + name + "'");
+  }
+  const int padded_H = info.dims[1];
   const int padded_W = info.dims[2];
   const int padded_C = info.dims[3];
   const int pad_h = info.padding[1][0];
@@ -50,7 +68,7 @@ Tensor dequantize(const axrTensorInfo &info,
       for (int w = 0; w < W; ++w) {
         for (int c = 0; c < C; ++c) {
           const int in_idx =
-              ((n * info.dims[1] + (h + pad_h)) * padded_W + (w + pad_w)) *
+              ((n * padded_H + (h + pad_h)) * padded_W + (w + pad_w)) *
                   padded_C +
               (c + pad_c);
           const int out_idx = ((n * C + c) * H + h) * W + w;
