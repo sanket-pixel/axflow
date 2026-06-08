@@ -52,6 +52,8 @@ Makefile
 install_manifest.txt
 compile_commands.json
 
+
+
 # Temporary files
 *.tmp
 *.log
@@ -67,3 +69,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+
+tests/fixtures/models/*
+!tests/fixtures/models/.gitkeep

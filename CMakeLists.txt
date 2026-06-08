@@ -107,14 +107,11 @@ set_target_properties(axruntime::axruntime PROPERTIES
 
 # axflow library
 set(AXFLOW_SOURCES
-        src/device.cpp
-        src/model.cpp
-        src/pipeline.cpp
-        src/preprocess.cpp
-        src/postprocess.cpp
-        src/config/axflow_config.cpp
-        src/config/config_base.cpp
-        src/config/preprocessing_config.cpp
+    src/config/config_base.cpp
+    src/config/preprocessing_config.cpp
+    src/config/axflow_config.cpp
+    src/device/device.cpp
+    src/model/model.cpp
 )
 
 if (AXFLOW_BUILD_SHARED)
@@ -126,9 +123,11 @@ endif ()
 add_library(axflow::axflow ALIAS axflow)
 
 target_include_directories(axflow
-        PUBLIC
+    PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_link_libraries(axflow

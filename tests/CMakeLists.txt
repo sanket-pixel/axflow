@@ -25,6 +25,4 @@ endfunction()
 axflow_add_test(test_axflow_config unit/config/test_axflow_config.cpp)
 
 # integration tests — only with -DAXFLOW_BUILD_INTEGRATION_TESTS=ON
-if (AXFLOW_BUILD_INTEGRATION_TESTS)
-    axflow_add_test(test_yolov8_end_to_end integration/test_yolov8_end_to_end.cpp)
-endif ()
+axflow_add_test(test_yolov8_end_to_end integration/test_yolov8_end_to_end.cpp)
