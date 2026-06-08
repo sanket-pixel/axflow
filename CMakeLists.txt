@@ -112,6 +112,7 @@ set(AXFLOW_SOURCES
     src/config/axflow_config.cpp
     src/device/device.cpp
     src/model/model.cpp
+        include/axflow/data_types/tensor.h
 )
 
 if (AXFLOW_BUILD_SHARED)

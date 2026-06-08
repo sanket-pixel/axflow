@@ -1,31 +1,30 @@
 #pragma once
 
-#include <memory>
+#include "axruntime/axruntime.hpp"
 
 namespace axflow {
 
-// owns axruntime context + connection — one per process
-// models borrow this via reference
+// owns axruntime context + connection — one per process.
+// models borrow this via reference.
 class Device {
 public:
-    Device();
-    ~Device();
+  Device();
+  ~Device();
 
-    Device(const Device&)            = delete;
-    Device& operator=(const Device&) = delete;
-    Device(Device&&) noexcept;
-    Device& operator=(Device&&) noexcept;
+  Device(const Device &) = delete;
+  Device &operator=(const Device &) = delete;
+  Device(Device &&) noexcept = default;
+  Device &operator=(Device &&) noexcept = default;
 
-    bool is_connected() const;
+  bool is_connected() const { return connection_ != nullptr; }
 
-    // pimpl — full type only visible inside src/
-    class Impl;
+  // raw handles for use inside the library
+  axrContext *context() const { return context_; }
+  axrConnection *connection() const { return connection_; }
 
 private:
-    std::unique_ptr<Impl> impl_;
-
-    // src/device/device_internal.h exposes this to Model::Impl
-    friend Impl* internal_impl(Device&);
+  axrContext *context_ = nullptr;
+  axrConnection *connection_ = nullptr;
 };
 
 } // namespace axflow
