@@ -8,7 +8,7 @@
 
 namespace axflow
 {
-  Model::Model(Device& device, const AxflowConfig& cfg)
+  Inference::Inference(Device& device, const AxflowConfig& cfg)
   {
     if (!device.is_connected())
     {
@@ -63,7 +63,7 @@ namespace axflow
     }
   }
 
-  Model::~Model()
+  Inference::~Inference()
   {
     if (instance_)
       axr_destroy(reinterpret_cast<const axrObject*>(instance_));
@@ -71,7 +71,7 @@ namespace axflow
       axr_destroy(reinterpret_cast<const axrObject*>(model_));
   }
 
-  int Model::find_input_index(const std::string& name) const
+  int Inference::find_input_index(const std::string& name) const
   {
     for (std::size_t i = 0; i < input_names_.size(); ++i)
     {
@@ -81,7 +81,7 @@ namespace axflow
     throw std::runtime_error("axflow::Model: no input named '" + name + "'");
   }
 
-  int Model::find_output_index(const std::string& name) const
+  int Inference::find_output_index(const std::string& name) const
   {
     for (std::size_t i = 0; i < output_names_.size(); ++i)
     {
@@ -91,7 +91,7 @@ namespace axflow
     throw std::runtime_error("axflow::Model: no output named '" + name + "'");
   }
 
-  InputBuffer Model::make_input_buffer(int i)
+  InputBuffer Inference::make_input_buffer(int i)
   {
     const auto& info = input_infos_.at(i);
     auto& buf = input_buffers_.at(i);
@@ -99,14 +99,14 @@ namespace axflow
                        info.scale, info.zero_point, buf.data(), buf.size());
   }
 
-  InputBuffer Model::get_input(const std::string& name)
+  InputBuffer Inference::get_input(const std::string& name)
   {
     return make_input_buffer(find_input_index(name));
   }
 
-  InputBuffer Model::get_input(int index) { return make_input_buffer(index); }
+  InputBuffer Inference::get_input(int index) { return make_input_buffer(index); }
 
-  std::vector<Tensor> Model::run()
+  std::vector<Tensor> Inference::run()
   {
     // wire input/output arguments
     std::vector<axrArgument> input_args(input_buffers_.size());
@@ -142,16 +142,16 @@ namespace axflow
     return outputs_;
   }
 
-  const Tensor& Model::get_output(const std::string& name) const
+  const Tensor& Inference::get_output(const std::string& name) const
   {
     return outputs_.at(find_output_index(name));
   }
 
-  const Tensor& Model::get_output(int index) const { return outputs_.at(index); }
+  const Tensor& Inference::get_output(int index) const { return outputs_.at(index); }
 
-  const std::string& Model::input_name(int i) const { return input_names_.at(i); }
+  const std::string& Inference::input_name(int i) const { return input_names_.at(i); }
 
-  const std::string& Model::output_name(int i) const
+  const std::string& Inference::output_name(int i) const
   {
     return output_names_.at(i);
   }

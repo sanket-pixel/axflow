@@ -51,7 +51,7 @@ TEST_F(Yolov8EndToEnd, DeviceConnects)
 TEST_F(Yolov8EndToEnd, ModelLoadsAndExposesShapes)
 {
   Device dev;
-  Model m(dev, load_cfg());
+  Inference m(dev, load_cfg());
 
   EXPECT_EQ(m.num_inputs(), 1);
   EXPECT_EQ(m.num_outputs(), 8);
@@ -60,7 +60,7 @@ TEST_F(Yolov8EndToEnd, ModelLoadsAndExposesShapes)
 TEST_F(Yolov8EndToEnd, InputShapeMatchesManifest)
 {
   Device dev;
-  Model m(dev, load_cfg());
+  Inference m(dev, load_cfg());
   auto in = m.get_input(0);
   auto s = in.shape();
 
@@ -75,7 +75,7 @@ TEST_F(Yolov8EndToEnd, InputShapeMatchesManifest)
 TEST_F(Yolov8EndToEnd, InputQuantParamsMatchManifest)
 {
   Device dev;
-  Model m(dev, load_cfg());
+  Inference m(dev, load_cfg());
   auto in = m.get_input(0);
 
   // manifest: quantize_params [[0.003921568859368563, -128]]
@@ -86,7 +86,7 @@ TEST_F(Yolov8EndToEnd, InputQuantParamsMatchManifest)
 TEST_F(Yolov8EndToEnd, OutputShapesMatchManifest)
 {
   Device dev;
-  Model m(dev, load_cfg());
+  Inference m(dev, load_cfg());
 
   // ground truth from chip (DEBUG_PrintAllOutputs):
   //   0-3: box branches  (C=64)
