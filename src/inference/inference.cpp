@@ -1,5 +1,6 @@
 #include "axflow/inference/inference.h"
-
+#include "axflow/utils/dequantize.h"
+#include "axflow/utils/tensor_layout.h"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -7,91 +8,6 @@
 
 namespace axflow
 {
-  namespace
-  {
-    std::vector<int> shape_of(const axrTensorInfo& t)
-    {
-      return std::vector<int>(t.dims, t.dims + t.ndims);
-    }
-
-    std::vector<std::array<size_t, 2>> padding_of(const axrTensorInfo& t)
-    {
-      std::vector<std::array<size_t, 2>> p(t.ndims);
-      for (int i = 0; i < t.ndims; ++i)
-      {
-        p[i] = {t.padding[i][0], t.padding[i][1]};
-      }
-      return p;
-    }
-
-    // dequantize int8 NHWC (padded) → float32 NCHW (dense)
-    Tensor dequantize(const axrTensorInfo& info,
-                      const std::vector<int8_t>& int8_buf,
-                      const std::string& name)
-    {
-      // dequantize int8 NHWC (padded, chip layout) → float32 NCHW (dense).
-      //
-      // Assumes:
-      //   - info.ndims == 4
-      //   - layout is NHWC (the only layout supported by AxRuntime today)
-      //   - padding may exist on any dim; we strip it
-      //
-      // For non-4D tensors (e.g. classifier heads with shape [N, num_classes])
-      // this will throw. v2 will support arbitrary ranks and layouts.
-      if (info.ndims != 4)
-      {
-        throw std::runtime_error(
-          "axflow::dequantize: only 4D tensors supported, got " +
-          std::to_string(info.ndims) + " dims for '" + name + "'");
-      }
-      // unpadded dimensions
-      const int N = info.dims[0] - info.padding[0][0] - info.padding[0][1];
-      const int H = info.dims[1] - info.padding[1][0] - info.padding[1][1];
-      const int W = info.dims[2] - info.padding[2][0] - info.padding[2][1];
-      const int C = info.dims[3] - info.padding[3][0] - info.padding[3][1];
-      if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
-      {
-        throw std::runtime_error(
-          "axflow::dequantize: invalid unpadded shape for '" + name + "'");
-      }
-      const int padded_H = info.dims[1];
-      const int padded_W = info.dims[2];
-      const int padded_C = info.dims[3];
-      const int pad_h = info.padding[1][0];
-      const int pad_w = info.padding[2][0];
-      const int pad_c = info.padding[3][0];
-
-      const float scale = info.scale;
-      const int zp = info.zero_point;
-
-      Tensor out;
-      out.name = name;
-      out.shape = {N, C, H, W};
-      out.data.resize(static_cast<std::size_t>(N) * C * H * W);
-
-      for (int n = 0; n < N; ++n)
-      {
-        for (int h = 0; h < H; ++h)
-        {
-          for (int w = 0; w < W; ++w)
-          {
-            for (int c = 0; c < C; ++c)
-            {
-              const int in_idx =
-                ((n * padded_H + (h + pad_h)) * padded_W + (w + pad_w)) *
-                padded_C +
-                (c + pad_c);
-              const int out_idx = ((n * C + c) * H + h) * W + w;
-              out.data[out_idx] =
-                (static_cast<float>(int8_buf[in_idx]) - zp) * scale;
-            }
-          }
-        }
-      }
-      return out;
-    }
-  } // anonymous namespace
-
   Model::Model(Device& device, const AxflowConfig& cfg)
   {
     if (!device.is_connected())
@@ -220,8 +136,8 @@ namespace axflow
     outputs_.reserve(output_infos_.size());
     for (std::size_t i = 0; i < output_infos_.size(); ++i)
     {
-      outputs_.push_back(
-        dequantize(output_infos_[i], output_buffers_[i], output_names_[i]));
+      outputs_.push_back(dequantize_nhwc_to_nchw(
+        output_infos_[i], output_buffers_[i], output_names_[i]));
     }
     return outputs_;
   }

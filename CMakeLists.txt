@@ -122,6 +122,10 @@ set(AXFLOW_SOURCES
 
         # top-level orchestrator
         src/axflow.cpp
+
+        # utils
+        src/utils/dequantize.cpp
+        src/utils/tensor_layout.cpp
 )
 
 if (AXFLOW_BUILD_SHARED)
