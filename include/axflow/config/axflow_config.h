@@ -26,7 +26,7 @@ namespace axflow
   public:
     PreprocessingConfig preprocessing;
     InferenceConfig inference;
-    // PostprocessingConfig  postprocessing; configs
+    PostprocessingConfig postprocessing;
 
     // load everything from one yaml file
     static AxflowConfig from_yaml(const std::string& path);

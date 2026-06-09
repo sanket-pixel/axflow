@@ -8,7 +8,7 @@
 
 namespace axflow
 {
-  Inference::Inference(Device& device, const AxflowConfig& cfg)
+  Inference::Inference(Device& device, const InferenceConfig& cfg)
   {
     if (!device.is_connected())
     {
@@ -17,7 +17,7 @@ namespace axflow
     context_ = device.context();
     connection_ = device.connection();
 
-    auto mpath = std::filesystem::path(cfg.inference.model_dir) / "model.json";
+    auto mpath = std::filesystem::path(cfg.model_dir) / "model.json";
 
     model_ = axr_load_model(context_, mpath.string().c_str());
     if (!model_)
@@ -28,7 +28,7 @@ namespace axflow
     }
 
     const std::string props_str = "input_dmabuf=0;num_sub_devices=1;aipu_cores=" +
-      std::to_string(cfg.inference.num_cores);
+      std::to_string(cfg.num_cores);
     auto* props = axr_create_properties(context_, props_str.c_str());
 
     instance_ = axr_load_model_instance(connection_, model_, props);

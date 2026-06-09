@@ -1,6 +1,6 @@
 #pragma once
 
-#include "axflow/config/axflow_config.h"
+#include "axflow/config/inference_config.h"
 #include "axflow/data_types/input_buffer.h"
 #include "axflow/data_types/tensor.h"
 #include "axflow/device/device.h"
@@ -23,7 +23,7 @@ namespace axflow
   class Inference
   {
   public:
-    Inference(Device& device, const AxflowConfig& cfg);
+    Inference(Device& device, const InferenceConfig& cfg);
     ~Inference();
 
     Inference(const Inference&) = delete;

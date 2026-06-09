@@ -23,10 +23,8 @@ namespace axflow
 
     void Preprocessor::run(const cv::Mat& image, InputBuffer& buffer) const
     {
-        // ── validate buffer ──
         const auto& shape = buffer.shape();
         const auto& padding = buffer.padding();
-
         if (shape.size() != 4)
         {
             throw std::runtime_error("axflow::Preprocessor: buffer must be 4D NHWC, got "
