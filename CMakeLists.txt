@@ -107,12 +107,21 @@ set_target_properties(axruntime::axruntime PROPERTIES
 
 # axflow library
 set(AXFLOW_SOURCES
-    src/config/config_base.cpp
-    src/config/preprocessing_config.cpp
-    src/config/axflow_config.cpp
-    src/device/device.cpp
-    src/model/model.cpp
-        include/axflow/data_types/tensor.h
+        # config
+        src/config/config_base.cpp
+        src/config/preprocessing_config.cpp
+        src/config/inference_config.cpp
+        src/config/postprocessing_config.cpp
+        src/config/axflow_config.cpp
+
+        # core
+        src/device/device.cpp
+        src/inference/inference.cpp
+        src/preprocess/preprocessor.cpp
+        src/postprocess/postprocessor.cpp
+
+        # top-level orchestrator
+        src/axflow.cpp
 )
 
 if (AXFLOW_BUILD_SHARED)
@@ -124,10 +133,10 @@ endif ()
 add_library(axflow::axflow ALIAS axflow)
 
 target_include_directories(axflow
-    PUBLIC
+        PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-    PRIVATE
+        PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 

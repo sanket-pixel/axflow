@@ -1,6 +1,6 @@
 #include "axflow/config/axflow_config.h"
 #include "axflow/device/device.h"
-#include "axflow/model/model.h"
+#include "axflow/inference/inference.h"
 
 #include <filesystem>
 #include <gtest/gtest.h>
@@ -12,36 +12,44 @@ namespace fs = std::filesystem;
 // integration test — needs real metis hardware + compiled yolov8s-ir artifacts
 // symlinked at tests/fixtures/models/yolov8s-ir/
 
-class Yolov8EndToEnd : public ::testing::Test {
+class Yolov8EndToEnd : public ::testing::Test
+{
 protected:
-  std::string fixture(const std::string &rel) const {
+  std::string fixture(const std::string& rel) const
+  {
     return std::string(AXFLOW_TEST_FIXTURES) + "/" + rel;
   }
 
-  std::string model_dir() const {
+  std::string model_dir() const
+  {
     return fixture("models/yolov8s-ir/yolov8s-ir/1");
   }
 
-  void SetUp() override {
-    if (!fs::exists(model_dir() + "/model.json")) {
+  void SetUp() override
+  {
+    if (!fs::exists(model_dir() + "/model.json"))
+    {
       GTEST_SKIP() << "yolov8s-ir artifacts not found under " << model_dir()
-                   << " — skipping";
+        << " — skipping";
     }
   }
 
-  AxflowConfig load_cfg() const {
+  AxflowConfig load_cfg() const
+  {
     auto cfg = AxflowConfig::from_yaml(fixture("configs/yolov8_valid.yaml"));
-    cfg.model_dir = model_dir();
+    cfg.inference.model_dir = model_dir();
     return cfg;
   }
 };
 
-TEST_F(Yolov8EndToEnd, DeviceConnects) {
+TEST_F(Yolov8EndToEnd, DeviceConnects)
+{
   Device dev;
   EXPECT_TRUE(dev.is_connected());
 }
 
-TEST_F(Yolov8EndToEnd, ModelLoadsAndExposesShapes) {
+TEST_F(Yolov8EndToEnd, ModelLoadsAndExposesShapes)
+{
   Device dev;
   Model m(dev, load_cfg());
 
@@ -49,7 +57,8 @@ TEST_F(Yolov8EndToEnd, ModelLoadsAndExposesShapes) {
   EXPECT_EQ(m.num_outputs(), 8);
 }
 
-TEST_F(Yolov8EndToEnd, InputShapeMatchesManifest) {
+TEST_F(Yolov8EndToEnd, InputShapeMatchesManifest)
+{
   Device dev;
   Model m(dev, load_cfg());
   auto in = m.get_input(0);
@@ -63,7 +72,8 @@ TEST_F(Yolov8EndToEnd, InputShapeMatchesManifest) {
   EXPECT_EQ(s[3], 4);
 }
 
-TEST_F(Yolov8EndToEnd, InputQuantParamsMatchManifest) {
+TEST_F(Yolov8EndToEnd, InputQuantParamsMatchManifest)
+{
   Device dev;
   Model m(dev, load_cfg());
   auto in = m.get_input(0);
@@ -73,27 +83,29 @@ TEST_F(Yolov8EndToEnd, InputQuantParamsMatchManifest) {
   EXPECT_EQ(in.zero_point(), -128);
 }
 
-TEST_F(Yolov8EndToEnd, OutputShapesMatchManifest) {
-    Device dev;
-    Model m(dev, load_cfg());
+TEST_F(Yolov8EndToEnd, OutputShapesMatchManifest)
+{
+  Device dev;
+  Model m(dev, load_cfg());
 
-    // ground truth from chip (DEBUG_PrintAllOutputs):
-    //   0-3: box branches  (C=64)
-    //   4-7: score branches (C=1, padded from 64)
-    const std::vector<std::vector<int>> expected = {
-        {1, 64, 128, 160},
-        {1, 64,  64,  80},
-        {1, 64,  32,  40},
-        {1, 64,  16,  20},
-        {1,  1, 128, 160},
-        {1,  1,  64,  80},
-        {1,  1,  32,  40},
-        {1,  1,  16,  20},
-    };
+  // ground truth from chip (DEBUG_PrintAllOutputs):
+  //   0-3: box branches  (C=64)
+  //   4-7: score branches (C=1, padded from 64)
+  const std::vector<std::vector<int>> expected = {
+    {1, 64, 128, 160},
+    {1, 64, 64, 80},
+    {1, 64, 32, 40},
+    {1, 64, 16, 20},
+    {1, 1, 128, 160},
+    {1, 1, 64, 80},
+    {1, 1, 32, 40},
+    {1, 1, 16, 20},
+  };
 
-    auto outs = m.run();
-    ASSERT_EQ(outs.size(), expected.size());
-    for (std::size_t i = 0; i < outs.size(); ++i) {
-        EXPECT_EQ(outs[i].shape, expected[i]) << "output " << i;
-    }
+  auto outs = m.run();
+  ASSERT_EQ(outs.size(), expected.size());
+  for (std::size_t i = 0; i < outs.size(); ++i)
+  {
+    EXPECT_EQ(outs[i].shape, expected[i]) << "output " << i;
+  }
 }

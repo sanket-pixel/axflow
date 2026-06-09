@@ -1,24 +1,37 @@
 #pragma once
 
 #include <axflow/config/config_base.h>
+#include <axflow/config/inference_config.h>
+#include <axflow/config/postprocessing_config.h>
 #include <axflow/config/preprocessor_config.h>
+
 #include <string>
 #include <yaml-cpp/yaml.h>
 
-namespace axflow {
+namespace axflow
+{
+  // top-level config — three pipeline stages.
+  //
+  // yaml shape:
+  //   preprocessing:
+  //     ...
+  //   inference:
+  //     model_dir: ...
+  //     num_cores: 1
+  //   postprocessing:
+  //     ...
+  //
+  class AxflowConfig : public ConfigBase
+  {
+  public:
+    PreprocessingConfig preprocessing;
+    InferenceConfig inference;
+    // PostprocessingConfig  postprocessing; configs
 
-// top-level axflow config
-class AxflowConfig : public ConfigBase {
-public:
-  std::string model_dir{"model"};
-  int num_cores = 1;
-  PreprocessingConfig preprocessing;
+    // load everything from one yaml file
+    static AxflowConfig from_yaml(const std::string& path);
 
-  // load everything from one yaml file
-  static AxflowConfig from_yaml(const std::string &path);
-
-protected:
-  void parse(const YAML::Node &node) override;
-};
-
+  protected:
+    void parse(const YAML::Node& node) override;
+  };
 } // namespace axflow

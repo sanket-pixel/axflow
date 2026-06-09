@@ -1,19 +1,23 @@
-#include "axflow/config/axflow_config.h"
+#include <axflow/config/axflow_config.h>
 
-namespace axflow {
+namespace axflow
+{
+  void AxflowConfig::parse(const YAML::Node& node)
+  {
+    if (node["preprocessing"])
+      preprocessing.from_node(node["preprocessing"]);
 
-void AxflowConfig::parse(const YAML::Node &node) {
-  auto root = node["axflow"] ? node["axflow"] : node;
-  model_dir = read(root, "model_dir", model_dir);
-  num_cores = read(root, "num_cores", num_cores);
-  if (node["preprocessing"])
-    preprocessing.from_node(node["preprocessing"]);
-}
+    if (node["inference"])
+      inference.from_node(node["inference"]);
 
-AxflowConfig AxflowConfig::from_yaml(const std::string &path) {
-  AxflowConfig cfg;
-  cfg.from_file(path);
-  return cfg;
-}
+    // if (node["postprocessing"])
+    //   postprocessing.from_node(node["postprocessing"]);
+  }
 
+  AxflowConfig AxflowConfig::from_yaml(const std::string& path)
+  {
+    AxflowConfig cfg;
+    cfg.from_file(path);
+    return cfg;
+  }
 } // namespace axflow

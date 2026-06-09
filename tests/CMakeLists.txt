@@ -23,6 +23,6 @@ endfunction()
 
 # unit tests
 axflow_add_test(test_axflow_config unit/config/test_axflow_config.cpp)
-
+axflow_add_test(test_preprocessor unit/preprocess/test_preprocessor.cpp)
 # integration tests — only with -DAXFLOW_BUILD_INTEGRATION_TESTS=ON
 axflow_add_test(test_yolov8_end_to_end integration/test_yolov8_end_to_end.cpp)

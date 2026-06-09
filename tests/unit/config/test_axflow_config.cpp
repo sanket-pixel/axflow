@@ -1,46 +1,76 @@
 #include "axflow/config/axflow_config.h"
+
 #include <gtest/gtest.h>
 #include <string>
 
 using namespace axflow;
-// base fixture — all config tests inherit this
-class AxflowConfigTest : public ::testing::Test {
+
+class AxflowConfigTest : public ::testing::Test
+{
 protected:
-  std::string fixture(const std::string &rel) const {
-    return std::string(AXFLOW_TEST_FIXTURES) + "/configs/" + rel;
-  }
+    std::string fixture(const std::string& rel) const
+    {
+        return std::string(AXFLOW_TEST_FIXTURES) + "/configs/" + rel;
+    }
 };
 
-// valid full config loads correctly
-TEST_F(AxflowConfigTest, LoadsValidYaml) {
-  auto cfg = AxflowConfig::from_yaml(fixture("yolov8_valid.yaml"));
+// ─── preprocessing block ─────────────────────────────────────
 
-  EXPECT_EQ(cfg.model_dir, "yolov8s-ir/1");
-  EXPECT_EQ(cfg.num_cores, 1);
+TEST_F(AxflowConfigTest, LoadsPreprocessingFromValidYaml)
+{
+    auto axflow_config = AxflowConfig::from_yaml(fixture("yolov8_valid.yaml"));
+
+    EXPECT_EQ(axflow_config.preprocessing.resize_mode, "stretch");
+    EXPECT_EQ(axflow_config.preprocessing.normalize, false);
+    EXPECT_EQ(axflow_config.preprocessing.input_is_bgr, true);
 }
 
-// preprocessing block parses correctly
-TEST_F(AxflowConfigTest, LoadsPreprocessing) {
-  auto cfg = AxflowConfig::from_yaml(fixture("yolov8_valid.yaml"));
+TEST_F(AxflowConfigTest, PreprocessingDefaultsWhenMissing)
+{
+    auto axflow_config = AxflowConfig::from_yaml(fixture("minimal.yaml"));
 
-  EXPECT_EQ(cfg.preprocessing.resize_mode, "stretch");
-  EXPECT_EQ(cfg.preprocessing.normalize, false);
-  EXPECT_EQ(cfg.preprocessing.input_is_bgr, true);
+    EXPECT_EQ(axflow_config.preprocessing.resize_mode, "stretch");
+    EXPECT_EQ(axflow_config.preprocessing.normalize, false);
+    EXPECT_EQ(axflow_config.preprocessing.input_is_bgr, true);
 }
 
-// minimal yaml — missing fields fall back to defaults
-TEST_F(AxflowConfigTest, DefaultsOnMinimalYaml) {
-  auto cfg = AxflowConfig::from_yaml(fixture("minimal.yaml"));
+// ─── inference block ─────────────────────────────────────────
 
-  EXPECT_EQ(cfg.model_dir, "model");
-  EXPECT_EQ(cfg.num_cores, 1);                         // default
-  EXPECT_EQ(cfg.preprocessing.normalize, false);       // default
-  EXPECT_EQ(cfg.preprocessing.input_is_bgr, true);     // default
-  EXPECT_EQ(cfg.preprocessing.resize_mode, "stretch"); // default
+TEST_F(AxflowConfigTest, LoadsInferenceFromValidYaml)
+{
+    auto axflow_config = AxflowConfig::from_yaml(fixture("yolov8_valid.yaml"));
+
+    EXPECT_EQ(axflow_config.inference.model_dir, "yolov8s-ir/1");
+    EXPECT_EQ(axflow_config.inference.num_cores, 1);
 }
 
-// missing file throws
-TEST_F(AxflowConfigTest, ThrowsOnMissingFile) {
-  EXPECT_THROW(AxflowConfig::from_yaml(fixture("does_not_exist.yaml")),
-               YAML::BadFile);
+TEST_F(AxflowConfigTest, InferenceDefaultsWhenMissing)
+{
+    auto axflow_config = AxflowConfig::from_yaml(fixture("minimal.yaml"));
+
+    EXPECT_EQ(axflow_config.inference.model_dir, "model");
+    EXPECT_EQ(axflow_config.inference.num_cores, 1);
+}
+
+// ─── full pipeline ───────────────────────────────────────────
+
+TEST_F(AxflowConfigTest, LoadsAllThreeBlocksFromValidYaml)
+{
+    auto axflow_config = AxflowConfig::from_yaml(fixture("yolov8_valid.yaml"));
+
+    // sanity check: all three sub-configs populated as expected
+    EXPECT_EQ(axflow_config.preprocessing.resize_mode, "stretch");
+    EXPECT_EQ(axflow_config.inference.model_dir, "yolov8s-ir/1");
+    // postprocessing has no fields yet — just confirm it exists with defaults
+    // (add assertions here when PostprocessingConfig grows fields)
+}
+
+// ─── error cases ─────────────────────────────────────────────
+
+TEST_F(AxflowConfigTest, ThrowsOnMissingFile)
+{
+    EXPECT_THROW(
+        AxflowConfig::from_yaml(fixture("does_not_exist.yaml")),
+        YAML::BadFile
+    );
 }
