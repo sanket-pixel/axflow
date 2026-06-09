@@ -126,6 +126,7 @@ set(AXFLOW_SOURCES
         # utils
         src/utils/dequantize.cpp
         src/utils/tensor_layout.cpp
+        src/utils/quantize.cpp
 )
 
 if (AXFLOW_BUILD_SHARED)

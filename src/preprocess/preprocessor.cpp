@@ -1,4 +1,5 @@
 #include "axflow/preprocess/preprocessor.h"
+#include "axflow/utils/quantize.h"
 
 #include <opencv2/imgproc.hpp>
 
@@ -12,16 +13,9 @@ namespace axflow
 {
     namespace
     {
-        // imagenet stats (only used when cfg.normalize == true)
         constexpr float kImagenetMean[3] = {0.485f, 0.456f, 0.406f};
         constexpr float kImagenetStd[3] = {0.229f, 0.224f, 0.225f};
-
-        inline int8_t quantize(float v, float scale, int zero_point)
-        {
-            const float q = std::round(v / scale + zero_point);
-            return static_cast<int8_t>(std::clamp(q, -128.0f, 127.0f));
-        }
-    } // anonymous namespace
+    }
 
     Preprocessor::Preprocessor(const PreprocessingConfig& cfg) : cfg_(cfg)
     {
