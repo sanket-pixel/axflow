@@ -111,14 +111,14 @@ set(AXFLOW_SOURCES
         src/config/config_base.cpp
         src/config/preprocessing_config.cpp
         src/config/inference_config.cpp
-        src/config/postprocessing_config.cpp
         src/config/axflow_config.cpp
+        src/config/postamble_config.cpp
 
         # core
         src/device/device.cpp
         src/inference/inference.cpp
         src/preprocess/preprocessor.cpp
-        src/postprocess/postprocessor.cpp
+        src/postamble/postamble.cpp
 
         # top-level orchestrator
         src/axflow.cpp
@@ -156,14 +156,7 @@ target_link_libraries(axflow
 # examples
 if (AXFLOW_BUILD_EXAMPLES)
     set(EXAMPLE_TARGETS
-            01_basic_inference
             02_yolov8_detection
-            03_lightfc_tracking
-            04_segmentation
-            05_depth_estimation
-            06_keypoint_matching
-            07_pose_estimation
-            08_parallel_models
     )
     foreach (EXAMPLE ${EXAMPLE_TARGETS})
         add_executable(${EXAMPLE} examples/${EXAMPLE}.cpp)

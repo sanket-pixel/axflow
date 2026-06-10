@@ -1,0 +1,12 @@
+preprocessing:
+  resize_mode: stretch
+  normalize: false
+  input_is_bgr: true
+
+inference:
+  model_dir: /home/ubuntu/voyager-sdk/build/yolov8s-ir/yolov8s-ir/1
+  num_cores: 1
+
+postamble:
+  enabled: true
+  graph_path: postprocess_graph.onnx

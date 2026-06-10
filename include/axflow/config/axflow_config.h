@@ -2,9 +2,8 @@
 
 #include <axflow/config/config_base.h>
 #include <axflow/config/inference_config.h>
-#include <axflow/config/postprocessing_config.h>
 #include <axflow/config/preprocessor_config.h>
-
+#include <axflow/config/postamble_config.h>
 #include <string>
 #include <yaml-cpp/yaml.h>
 
@@ -26,7 +25,7 @@ namespace axflow
   public:
     PreprocessingConfig preprocessing;
     InferenceConfig inference;
-    PostprocessingConfig postprocessing;
+    PostambleConfig postamble;
 
     // load everything from one yaml file
     static AxflowConfig from_yaml(const std::string& path);

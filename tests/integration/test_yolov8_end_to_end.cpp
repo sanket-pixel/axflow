@@ -189,32 +189,6 @@ TEST_F(Yolov8EndToEnd, AxFlowInferenceProducesExpectedOutputShapes)
     EXPECT_EQ(outs[7].shape, (std::vector<int>{1, 1, 16, 20}));
 }
 
-TEST_F(Yolov8EndToEnd, AxFlowPostprocessStubReturnsInferenceOutputs)
-{
-    if (!fs::exists(sample_image_path()))
-    {
-        GTEST_SKIP() << "sample.png missing at " << sample_image_path();
-    }
-
-    Device dev;
-    auto cfg = load_cfg();
-    AxFlow flow(dev, cfg);
-
-    cv::Mat image = cv::imread(sample_image_path());
-    ASSERT_FALSE(image.empty());
-
-    flow.preprocess(image);
-    auto inf_out = flow.inference();
-    auto post = flow.postprocess();
-
-    // stub passes through unchanged
-    ASSERT_EQ(post.size(), inf_out.size());
-    for (std::size_t i = 0; i < post.size(); ++i)
-    {
-        EXPECT_EQ(post[i].shape, inf_out[i].shape) << "output " << i;
-    }
-}
-
 TEST_F(Yolov8EndToEnd, AxFlowInferenceProducesNonGarbageValues)
 {
     // basic sanity: not all zeros, values in plausible range for dequantized data.

@@ -10,8 +10,8 @@ namespace axflow
     if (node["inference"])
       inference.from_node(node["inference"]);
 
-    if (node["postprocessing"])
-      postprocessing.from_node(node["postprocessing"]);
+    if (node["postamble"])
+      postamble.from_node(node["postamble"]);
   }
 
   AxflowConfig AxflowConfig::from_yaml(const std::string& path)

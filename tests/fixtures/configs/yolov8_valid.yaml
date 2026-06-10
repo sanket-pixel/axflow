@@ -6,5 +6,3 @@ preprocessing:
 inference:
   model_dir: yolov8s-ir/1
   num_cores: 1
-
-postprocessing:

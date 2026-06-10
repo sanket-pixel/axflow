@@ -1,5 +1,7 @@
 #include "axflow/axflow.h"
 
+#include <stdexcept>
+
 namespace axflow
 {
     AxFlow::AxFlow(Device& device, const std::string& config_path)
@@ -10,14 +12,17 @@ namespace axflow
     AxFlow::AxFlow(Device& device, const AxflowConfig& config)
         : config_(config),
           preprocessor_(config_.preprocessing),
-          inference_(device, config_.inference),
-          postprocessor_(config_.postprocessing)
+          inference_(device, config_.inference)
     {
+        if (config_.postamble.enabled)
+        {
+            postamble_ = std::make_unique<Postamble>(config_.postamble,
+                                                     config_.inference.model_dir);
+        }
     }
 
     void AxFlow::preprocess(const cv::Mat& image)
     {
-        // single-input case for now — first input buffer
         auto input = inference_.get_input(0);
         preprocessor_.run(image, input);
     }
@@ -28,8 +33,23 @@ namespace axflow
         return inference_outputs_;
     }
 
-    std::vector<Tensor> AxFlow::postprocess()
+    std::vector<Tensor> AxFlow::postamble()
     {
-        return postprocessor_.run(inference_outputs_);
+        if (!postamble_)
+        {
+            throw std::runtime_error(
+                "axflow::AxFlow::postamble: postamble is not enabled in config");
+        }
+        return postamble_->run(inference_outputs_);
+    }
+
+    Postamble& AxFlow::postamble_obj()
+    {
+        if (!postamble_)
+        {
+            throw std::runtime_error(
+                "axflow::AxFlow::postamble_obj: postamble is not enabled in config");
+        }
+        return *postamble_;
     }
 } // namespace axflow
