@@ -7,11 +7,9 @@ namespace common
 {
     struct Detection
     {
-        float x1 = 0.0f;
-        float y1 = 0.0f;
-        float x2 = 0.0f;
-        float y2 = 0.0f;
-        float score = 0.0f;
+        float x1, y1, x2, y2;
+        float score;
+        int class_id = -1; // add this
     };
 
     // Parses the [1, 27200, 5] postamble tensor, finds the highest score anchor,

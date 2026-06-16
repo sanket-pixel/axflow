@@ -4,7 +4,7 @@ preprocessing:
   input_is_bgr: true
 
 inference:
-  model_dir: /home/ubuntu/voyager-sdk/build/yolov8s-ir/yolov8s-ir/1
+  model_dir: yolov8s/yolov8s_coco_compiled
   num_cores: 1
 
 postamble:
