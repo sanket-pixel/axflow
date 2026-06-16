@@ -40,6 +40,17 @@ namespace axflow
             throw std::runtime_error(
                 "axflow::AxFlow::postamble: postamble is not enabled in config");
         }
+
+        const std::size_t expected = postamble_->num_inputs();
+        if (inference_outputs_.size() > expected)
+        {
+            std::vector<Tensor> sliced(
+                inference_outputs_.begin(),
+                inference_outputs_.begin() + expected
+            );
+            return postamble_->run(sliced);
+        }
+
         return postamble_->run(inference_outputs_);
     }
 
