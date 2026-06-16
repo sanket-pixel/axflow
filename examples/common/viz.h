@@ -6,4 +6,5 @@
 namespace common
 {
     void draw_detection(cv::Mat& image, const Detection& det);
+    void draw_detections(cv::Mat& image, const std::vector<Detection>& dets);
 }

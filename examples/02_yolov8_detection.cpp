@@ -20,9 +20,15 @@ int main(int argc, char** argv)
     flow.preprocess(image);
     flow.inference();
     auto tensors = flow.postamble();
-    auto bbox = common::parse_yolov8_best_box(tensors, image.cols, image.rows);
+    auto detections = common::parse_yolov8_detections(
+        tensors, image.cols, image.rows, 0.25f, 0.45f);
 
-    common::draw_detection(image, bbox);
+    common::draw_detections(image, detections);
+    std::cout << "Detections: " << detections.size() << std::endl;
+    for (const auto& d : detections)
+        std::cout << "  " << common::COCO_CLASSES[d.class_id]
+            << " " << d.score << "\n";
+
     cv::imwrite(args->output_path, image);
     return 0;
 }
