@@ -41,17 +41,23 @@ namespace axflow
                 "axflow::AxFlow::postamble: postamble is not enabled in config");
         }
 
-        const std::size_t expected = postamble_->num_inputs();
-        if (inference_outputs_.size() > expected)
-        {
-            std::vector<Tensor> sliced(
-                inference_outputs_.begin(),
-                inference_outputs_.begin() + expected
-            );
-            return postamble_->run(sliced);
-        }
+        const std::size_t n_aipu = inference_outputs_.size();
+        const std::size_t n_expected = postamble_->num_inputs();
 
-        return postamble_->run(inference_outputs_);
+        // slice first n_expected outputs for postamble
+        std::vector<Tensor> postamble_inputs(
+            inference_outputs_.begin(),
+            inference_outputs_.begin() + std::min(n_expected, n_aipu)
+        );
+
+        // run postamble
+        auto results = postamble_->run(postamble_inputs);
+
+        // append any extra AIPU outputs that postamble didn't consume
+        for (std::size_t i = n_expected; i < n_aipu; ++i)
+            results.push_back(inference_outputs_[i]);
+
+        return results;
     }
 
     Postamble& AxFlow::postamble_obj()
