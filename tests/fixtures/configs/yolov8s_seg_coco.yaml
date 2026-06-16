@@ -1,0 +1,13 @@
+# configs/yolov8s_seg_coco.yaml
+preprocessing:
+  resize_mode: stretch
+  normalize: false
+  input_is_bgr: true
+
+inference:
+  model_dir: /absolute/path/to/yolov8s_seg_compiled
+  num_cores: 4
+
+postamble:
+  enabled: true
+  graph_path: postprocess_graph.onnx

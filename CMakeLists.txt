@@ -157,11 +157,14 @@ target_link_libraries(axflow
 if (AXFLOW_BUILD_EXAMPLES)
     set(EXAMPLE_TARGETS
             02_yolov8_detection
+            04_segmentation
     )
     set(COMMON_SRC
             examples/common/args.cpp
             examples/common/viz.cpp
             examples/common/yolov8_utils.cpp
+            examples/common/yolov8_seg_utils.h
+            examples/common/yolov8s_seg_utils.cpp
     )
     foreach (EXAMPLE ${EXAMPLE_TARGETS})
         add_executable(${EXAMPLE} examples/${EXAMPLE}.cpp ${COMMON_SRC})
