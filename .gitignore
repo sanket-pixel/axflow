@@ -73,3 +73,13 @@ Testing/
 
 tests/fixtures/models/*
 !tests/fixtures/models/.gitkeep
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# downloaded assets
+assets/models/
+assets/images/
+!assets/models/.gitkeep
+!assets/images/.gitkeep

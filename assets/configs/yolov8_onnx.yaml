@@ -1,0 +1,10 @@
+inference_type: "onnx"
+
+preprocessing:
+  resize_mode: stretch
+  normalize: false
+  input_is_bgr: true
+
+onnx_inference:
+  model_path: assets/models/detection/yolov8s.onnx
+  intra_op_num_threads: 4

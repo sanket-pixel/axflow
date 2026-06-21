@@ -2,31 +2,17 @@
 
 #include "axflow/config/preprocessor_config.h"
 #include "axflow/data_types/input_buffer.h"
-
+#include "axflow/data_types/tensor.h"
 #include <opencv2/core.hpp>
 
-namespace axflow
-{
-    // turns a cv::Mat into a chip-ready int8 NHWC padded buffer.
-    //
-    // assumes:
-    //   - input cv::Mat is HWC BGR uint8, 3 channels
-    //   - target InputBuffer is 4D NHWC with N=1 and C_unpadded == 3
-    //   - resize mode is "stretch" (letterbox not yet implemented)
-    //
-    // throws on any violation of the above.
-    //
-    // usage:
-    //   Preprocessor pp(cfg);
-    //   auto in = model.get_input("image");
-    //   pp.run(image, in);
-    //
-    class Preprocessor
-    {
+namespace axflow {
+    // Handles resizing, color conversion, normalization, and layout packing.
+    class Preprocessor {
     public:
-        explicit Preprocessor(const PreprocessingConfig& cfg);
-
-        void run(const cv::Mat& image, InputBuffer& buffer) const;
+        explicit Preprocessor(const PreprocessingConfig &cfg);
+        
+        // Unified Scratchpad Path: Writes into a standard float32 NCHW Tensor.
+        void run(const cv::Mat &image, Tensor &out_tensor) const;
 
     private:
         PreprocessingConfig cfg_;

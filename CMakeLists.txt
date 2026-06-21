@@ -111,12 +111,14 @@ set(AXFLOW_SOURCES
         src/config/config_base.cpp
         src/config/preprocessing_config.cpp
         src/config/inference_config.cpp
+        src/config/onnx_inference_config.cpp
         src/config/axflow_config.cpp
         src/config/postamble_config.cpp
 
         # core
         src/device/device.cpp
-        src/inference/inference.cpp
+        src/inference/axruntime_inference.cpp
+        src/inference/onnx_inference.cpp
         src/preprocess/preprocessor.cpp
         src/postamble/postamble.cpp
 
@@ -127,6 +129,7 @@ set(AXFLOW_SOURCES
         src/utils/dequantize.cpp
         src/utils/tensor_layout.cpp
         src/utils/quantize.cpp
+        src/inference/generate_inference.cpp
 )
 
 if (AXFLOW_BUILD_SHARED)

@@ -3,7 +3,7 @@
 #include "axflow/config/axflow_config.h"
 #include "axflow/data_types/tensor.h"
 #include "axflow/device/device.h"
-#include "axflow/inference/inference.h"
+#include "axflow/inference/inference_interface.h"
 #include "axflow/postamble/postamble.h"
 #include "axflow/preprocess/preprocessor.h"
 
@@ -13,58 +13,43 @@
 #include <string>
 #include <vector>
 
-namespace axflow
-{
-    // top-level pipeline orchestrator.
-    //
-    // owns one Preprocessor, one Inference, and (if enabled) one Postamble.
-    // users drive the stages explicitly:
-    //
-    //   Device dev;
-    //   AxFlow flow(dev, "yolo.yaml");
-    //
-    //   flow.preprocess(image);
-    //   flow.inference();
-    //   auto tensors = flow.postamble();      // optional, throws if not enabled
-    //
-    //   // user-side postprocessing lives outside AxFlow.
-    //
-    class AxFlow
-    {
+namespace axflow {
+    class AxFlow {
     public:
-        AxFlow(Device& device, const std::string& config_path);
-        AxFlow(Device& device, const AxflowConfig& config);
+        AxFlow(Device &device, const std::string &config_path);
+        AxFlow(Device &device, const AxflowConfig &config);
 
-        AxFlow(const AxFlow&) = delete;
-        AxFlow& operator=(const AxFlow&) = delete;
-        AxFlow(AxFlow&&) noexcept = default;
-        AxFlow& operator=(AxFlow&&) noexcept = default;
+        AxFlow(const AxFlow &) = delete;
+        AxFlow &operator=(const AxFlow &) = delete;
+        AxFlow(AxFlow &&) noexcept = default;
+        AxFlow &operator=(AxFlow &&) noexcept = default;
 
-        // ── stage 1: image → chip-side input buffer ──
-        void preprocess(const cv::Mat& image);
+        // ─── Pipeline Stages ───
 
-        // ── stage 2: run on chip + dequantize ──
-        std::vector<Tensor> inference();
+        void preprocess(const cv::Mat &image);
 
-        // ── stage 3: run ORT postamble graph ──
-        // throws if postamble is not enabled in config.
-        std::vector<Tensor> postamble();
+        // Returns a reference to the engine's internal memory (Zero allocations)
+        std::vector<Tensor> &inference();
 
-        // ── component access for advanced use ──
-        Preprocessor& preprocessor() { return preprocessor_; }
-        Inference& inference_obj() { return inference_; }
-        Postamble& postamble_obj(); // throws if not enabled
+        std::vector<Tensor> &postamble();
 
+        // ─── Introspection ───
+
+        Preprocessor &preprocessor() { return preprocessor_; }
         bool postamble_enabled() const { return postamble_ != nullptr; }
+        bool is_onnx_backend() const { return config_.inference_type == "onnx"; }
 
     private:
+        void init_engines(Device &device);
+
         AxflowConfig config_;
-
         Preprocessor preprocessor_;
-        Inference inference_;
-        std::unique_ptr<Postamble> postamble_; // null if disabled in config
 
-        // cached between stages
-        std::vector<Tensor> inference_outputs_;
+        // Polymorphic engine (hides ONNX vs AIPU completely)
+        std::unique_ptr<InferenceInterface> engine_;
+        std::unique_ptr<Postamble> postamble_;
+
+        // Stores postamble outputs to safely return by reference
+        std::vector<Tensor> postamble_outputs_;
     };
 } // namespace axflow

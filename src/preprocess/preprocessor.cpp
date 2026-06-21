@@ -1,122 +1,67 @@
 #include "axflow/preprocess/preprocessor.h"
-#include "axflow/utils/quantize.h"
-
 #include <opencv2/imgproc.hpp>
-
-#include <algorithm>
-#include <cmath>
-#include <cstring>
 #include <stdexcept>
-#include <string>
+#include <opencv2/dnn.hpp>
 
-namespace axflow
-{
-    namespace
-    {
-        constexpr float kImagenetMean[3] = {0.485f, 0.456f, 0.406f};
-        constexpr float kImagenetStd[3] = {0.229f, 0.224f, 0.225f};
+namespace axflow {
+    // ImageNet constants for optional normalization
+    static constexpr float kImagenetMean[3] = {0.485f, 0.456f, 0.406f};
+    static constexpr float kImagenetStd[3] = {0.229f, 0.224f, 0.225f};
+
+    Preprocessor::Preprocessor(const PreprocessingConfig &cfg)
+        : cfg_(cfg) {
     }
 
-    Preprocessor::Preprocessor(const PreprocessingConfig& cfg) : cfg_(cfg)
-    {
-    }
-
-    void Preprocessor::run(const cv::Mat& image, InputBuffer& buffer) const
-    {
-        const auto& shape = buffer.shape();
-        const auto& padding = buffer.padding();
-        if (shape.size() != 4)
-        {
-            throw std::runtime_error("axflow::Preprocessor: buffer must be 4D NHWC, got "
-                + std::to_string(shape.size()) + "D");
-        }
-        if (shape[0] - padding[0][0] - padding[0][1] != 1)
-        {
-            throw std::runtime_error("axflow::Preprocessor: only batch size 1 supported");
+    void Preprocessor::run(const cv::Mat &image, Tensor &out_tensor) const {
+        if (out_tensor.shape.size() != 4) {
+            throw std::runtime_error("axflow::Preprocessor: out_tensor must be 4D");
         }
 
-        const int padded_h = static_cast<int>(shape[1]);
-        const int padded_w = static_cast<int>(shape[2]);
-        const int padded_c = static_cast<int>(shape[3]);
+        const bool is_nchw = (out_tensor.shape[1] == 3);
+        const bool is_nhwc = (out_tensor.shape[3] == 3);
 
-        const int unpadded_h = padded_h - static_cast<int>(padding[1][0] + padding[1][1]);
-        const int unpadded_w = padded_w - static_cast<int>(padding[2][0] + padding[2][1]);
-        const int unpadded_c = padded_c - static_cast<int>(padding[3][0] + padding[3][1]);
-
-        const int pad_h = static_cast<int>(padding[1][0]);
-        const int pad_w = static_cast<int>(padding[2][0]);
-        const int pad_c = static_cast<int>(padding[3][0]);
-
-        if (unpadded_h <= 0 || unpadded_w <= 0 || unpadded_c <= 0)
-        {
-            throw std::runtime_error("axflow::Preprocessor: invalid unpadded shape");
-        }
-        if (unpadded_c != 3)
-        {
-            throw std::runtime_error("axflow::Preprocessor: only 3-channel inputs supported, got C="
-                + std::to_string(unpadded_c));
+        if (!is_nchw && !is_nhwc) {
+            throw std::runtime_error("axflow::Preprocessor: unsupported tensor layout");
         }
 
-        // ── validate image ──
-        if (image.empty())
-        {
-            throw std::runtime_error("axflow::Preprocessor: input image is empty");
-        }
-        if (image.channels() != 3)
-        {
-            throw std::runtime_error("axflow::Preprocessor: input image must be 3-channel, got "
-                + std::to_string(image.channels()));
-        }
-        if (image.type() != CV_8UC3)
-        {
-            throw std::runtime_error("axflow::Preprocessor: input image must be CV_8UC3 (uint8 BGR)");
+        const int target_h = is_nchw ? out_tensor.shape[2] : out_tensor.shape[1];
+        const int target_w = is_nchw ? out_tensor.shape[3] : out_tensor.shape[2];
+
+        if (image.empty() || image.channels() != 3 || image.type() != CV_8UC3) {
+            throw std::runtime_error("axflow::Preprocessor: invalid input image");
         }
 
-        // ── resize ──
-        if (cfg_.resize_mode != "stretch")
-        {
-            // letterbox not yet implemented — fall back with a warning would go through a logger;
-            // for now we just stretch to keep behavior predictable.
-        }
-        cv::Mat resized;
-        cv::resize(image, resized, cv::Size(unpadded_w, unpadded_h));
+        // 1. Resize and Color Convert
+        cv::Mat resized, rgb;
+        cv::resize(image, resized, cv::Size(target_w, target_h));
 
-        // ── BGR → RGB if requested ──
-        cv::Mat rgb = resized;
-        if (cfg_.input_is_bgr)
-        {
+        if (cfg_.input_is_bgr) {
             cv::cvtColor(resized, rgb, cv::COLOR_BGR2RGB);
+        } else {
+            rgb = resized;
         }
 
-        // ── pre-fill entire buffer with zero_point (neutral padding) ──
-        const float scale = buffer.scale();
-        const int zp = buffer.zero_point();
-        const int8_t pad_val = static_cast<int8_t>(std::clamp(zp, -128, 127));
+        // 2. Vectorized Scale to [0, 1]
+        cv::Mat rgb_f;
+        rgb.convertTo(rgb_f, CV_32FC3, 1.0f / 255.0f);
 
-        std::memset(buffer.data(), static_cast<unsigned char>(pad_val), buffer.size());
+        // 3. Vectorized Normalization
+        if (cfg_.normalize) {
+            cv::subtract(rgb_f, cv::Scalar(kImagenetMean[0], kImagenetMean[1], kImagenetMean[2]), rgb_f);
+            cv::divide(rgb_f, cv::Scalar(kImagenetStd[0], kImagenetStd[1], kImagenetStd[2]), rgb_f);
+        }
 
-        // ── write real pixel data ──
-        // NHWC layout, N=1: idx = ((h * padded_w) + w) * padded_c + c
-        int8_t* out = buffer.data();
+        // Ensure our output tensor is allocated
+        out_tensor.data.resize(out_tensor.numel());
 
-        for (int y = 0; y < unpadded_h; ++y)
-        {
-            const cv::Vec3b* row = rgb.ptr<cv::Vec3b>(y);
-            for (int x = 0; x < unpadded_w; ++x)
-            {
-                const cv::Vec3b& px = row[x];
-
-                for (int c = 0; c < 3; ++c)
-                {
-                    float v = px[c] / 255.0f;
-                    if (cfg_.normalize)
-                    {
-                        v = (v - kImagenetMean[c]) / kImagenetStd[c];
-                    }
-                    const int idx = ((y + pad_h) * padded_w + (x + pad_w)) * padded_c + (c + pad_c);
-                    out[idx] = quantize(v, scale, zp);
-                }
-            }
+        // 4. Zero-Loop Layout Routing
+        if (is_nhwc) {
+            // cv::Mat is natively NHWC! We can literally just memcpy it over.
+            std::memcpy(out_tensor.data.data(), rgb_f.data, out_tensor.numel() * sizeof(float));
+        } else {
+            // Use OpenCV's highly optimized DNN backend to transpose NHWC -> NCHW
+            cv::Mat blob = cv::dnn::blobFromImage(rgb_f);
+            std::memcpy(out_tensor.data.data(), blob.data, out_tensor.numel() * sizeof(float));
         }
     }
 } // namespace axflow

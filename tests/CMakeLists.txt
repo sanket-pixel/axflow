@@ -26,3 +26,8 @@ axflow_add_test(test_axflow_config unit/config/test_axflow_config.cpp)
 axflow_add_test(test_preprocessor unit/preprocess/test_preprocessor.cpp)
 # integration tests — only with -DAXFLOW_BUILD_INTEGRATION_TESTS=ON
 axflow_add_test(test_yolov8_end_to_end integration/test_yolov8_end_to_end.cpp)
+axflow_add_test(test_yolov8_onnx_end_to_end integration/test_yolov8_onnx_end_to_end.cpp)
+target_compile_definitions(test_yolov8_onnx_end_to_end
+        PRIVATE
+        AXFLOW_ASSETS_DIR="${PROJECT_SOURCE_DIR}/assets"
+)
