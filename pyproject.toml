@@ -1,0 +1,15 @@
+[project]
+name = "axflow"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "onnx>=1.22.0",
+    "requests>=2.34.2",
+    "rich>=15.0.0",
+    "ultralytics>=8.4.71",
+]
+
+[dependency-groups]
+dev = [
+    "rich>=15.0.0",
+]
