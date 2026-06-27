@@ -17,13 +17,13 @@ namespace axflow {
     }
 
     void AxFlow::init_engines(Device &device) {
-        // 1. Factory generates the polymorphic engine.
-        // The engine fully allocates and locks its own physical memory here.
+        // factory builds the polymorphic engine (aipu or onnx).
+        // engine allocates and locks its own physical memory at this point.
         engine_ = generate_inference(device, config_);
 
-        // 2. Initialize Postamble if enabled
         if (config_.postamble.enabled) {
-            postamble_ = std::make_unique<Postamble>(config_.postamble, config_.inference.model_dir);
+            postamble_ = std::make_unique<Postamble>(
+                config_.postamble, config_.axruntime_inference.model_dir);
         }
     }
 
@@ -31,27 +31,23 @@ namespace axflow {
         if (!engine_) {
             throw std::runtime_error("axflow::AxFlow: engine not initialized for preprocessing");
         }
-        // Ask the engine for the direct reference to its mapped memory.
-        // The Preprocessor writes natively into it.
+        // preprocessor writes directly into the engine's mapped input memory.
         preprocessor_.run(image, engine_->get_input_tensor(0));
     }
 
-    std::vector<Tensor> &AxFlow::inference() {
+    std::vector<Tensor> AxFlow::inference() {
         if (!engine_) {
             throw std::runtime_error("axflow::AxFlow: inference engine not initialized");
         }
+        raw_outputs_ = engine_->run();
 
-        // Execute. Zero copies, zero allocations.
-        return engine_->run();
+        if (postamble_) {
+            return postamble_->run(raw_outputs_);
+        }
+        return raw_outputs_;
     }
 
-    std::vector<Tensor> &AxFlow::postamble() {
-        if (!postamble_) {
-            throw std::runtime_error("axflow::AxFlow: postamble called but not enabled in config");
-        }
-
-        // We pass the output memory from the inference engine directly into the postamble graph
-        postamble_outputs_ = postamble_->run(engine_->run());
-        return postamble_outputs_;
+    const std::vector<Tensor> &AxFlow::raw_aipu_outputs() const {
+        return raw_outputs_;
     }
 } // namespace axflow

@@ -110,7 +110,7 @@ set(AXFLOW_SOURCES
         # config
         src/config/config_base.cpp
         src/config/preprocessing_config.cpp
-        src/config/inference_config.cpp
+        src/config/axruntime_inference_config.cpp
         src/config/onnx_inference_config.cpp
         src/config/axflow_config.cpp
         src/config/postamble_config.cpp

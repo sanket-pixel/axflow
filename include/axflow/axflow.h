@@ -17,23 +17,24 @@ namespace axflow {
     class AxFlow {
     public:
         AxFlow(Device &device, const std::string &config_path);
+
         AxFlow(Device &device, const AxflowConfig &config);
 
         AxFlow(const AxFlow &) = delete;
-        AxFlow &operator=(const AxFlow &) = delete;
-        AxFlow(AxFlow &&) noexcept = default;
-        AxFlow &operator=(AxFlow &&) noexcept = default;
 
-        // ─── Pipeline Stages ───
+        AxFlow &operator=(const AxFlow &) = delete;
+
+        AxFlow(AxFlow &&) noexcept = default;
+
+        AxFlow &operator=(AxFlow &&) noexcept = default;
 
         void preprocess(const cv::Mat &image);
 
-        // Returns a reference to the engine's internal memory (Zero allocations)
-        std::vector<Tensor> &inference();
+        std::vector<Tensor> inference();
 
         std::vector<Tensor> &postamble();
 
-        // ─── Introspection ───
+        const std::vector<Tensor> &raw_aipu_outputs() const;
 
         Preprocessor &preprocessor() { return preprocessor_; }
         bool postamble_enabled() const { return postamble_ != nullptr; }
@@ -51,5 +52,6 @@ namespace axflow {
 
         // Stores postamble outputs to safely return by reference
         std::vector<Tensor> postamble_outputs_;
+        std::vector<Tensor> raw_outputs_;
     };
 } // namespace axflow

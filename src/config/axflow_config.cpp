@@ -12,8 +12,8 @@ namespace axflow {
       preprocessing.from_node(node["preprocessing"]);
     }
 
-    if (node["inference"]) {
-      inference.from_node(node["inference"]);
+    if (node["axruntime_inference"]) {
+      axruntime_inference.from_node(node["axruntime_inference"]);
     }
 
     if (node["onnx_inference"]) {

@@ -9,7 +9,7 @@
 #include <stdexcept>
 
 namespace axflow {
-    AxRuntimeInference::AxRuntimeInference(Device &device, const InferenceConfig &cfg) {
+    AxRuntimeInference::AxRuntimeInference(Device &device, const AxruntimeInferenceConfig &cfg) {
         if (!device.is_connected()) {
             throw std::runtime_error("axflow::AxRuntimeInference: device not connected");
         }
@@ -22,7 +22,7 @@ namespace axflow {
             throw std::runtime_error("axflow::AxRuntimeInference: load_model failed");
         }
 
-        const std::string property_string = "input_dmabuf=0;num_sub_devices=1;aipu_cores=" + std::to_string(
+        const std::string property_string = "input_dmabuf=0;num_sub_devices=4;aipu_cores=" + std::to_string(
                                                 cfg.num_cores);
         auto *properties = axr_create_properties(context_, property_string.c_str());
 

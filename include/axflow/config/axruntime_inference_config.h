@@ -5,16 +5,14 @@
 #include <string>
 #include <yaml-cpp/yaml.h>
 
-namespace axflow
-{
+namespace axflow {
     // inference block — points at compiled chip artifacts and runtime knobs
-    class InferenceConfig : public ConfigBase
-    {
+    class AxruntimeInferenceConfig : public ConfigBase {
     public:
         std::string model_dir{"model"};
         int num_cores = 1;
 
     protected:
-        void parse(const YAML::Node& node) override;
+        void parse(const YAML::Node &node) override;
     };
 } // namespace axflow

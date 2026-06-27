@@ -1,6 +1,6 @@
 #pragma once
 
-#include "axflow/config/inference_config.h"
+#include "axflow/config/axruntime_inference_config.h"
 #include "axflow/data_types/input_buffer.h"
 #include "axflow/data_types/tensor.h"
 #include "axflow/device/device.h"
@@ -14,7 +14,7 @@
 namespace axflow {
     class AxRuntimeInference : public InferenceInterface {
     public:
-        AxRuntimeInference(Device &device, const InferenceConfig &cfg);
+        explicit AxRuntimeInference(Device &device, const AxruntimeInferenceConfig &cfg);
 
         ~AxRuntimeInference() override;
 
@@ -26,8 +26,6 @@ namespace axflow {
 
         AxRuntimeInference &operator=(AxRuntimeInference &&) noexcept = default;
 
-        // ─── InferenceInterface Contract ───
-
         int input_count() const override { return static_cast<int>(input_infos_.size()); }
         int output_count() const override { return static_cast<int>(output_infos_.size()); }
 
@@ -38,8 +36,6 @@ namespace axflow {
         Tensor &get_input_tensor(int index) override;
 
         std::vector<Tensor> &run() override;
-
-        // ─── Native Hardware Layer 1 Primitives ───
 
         InputBuffer get_input_buffer(const std::string &name);
 

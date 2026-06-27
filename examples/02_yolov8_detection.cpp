@@ -26,11 +26,6 @@ int main(int argc, char **argv) {
     const auto &tensors = flow.inference();
     auto detections = common::parse_yolov8_detections(
         tensors, image.cols, image.rows, 0.25f, 0.45f);
-    std::cout << "detections: " << detections.size() << "\n";
-    for (const auto &d: detections) {
-        std::cout << "  " << common::COCO_CLASSES[d.class_id]
-                << " " << d.score << "\n";
-    }
     common::draw_detections(image, detections);
     cv::imwrite(args->output_path, image);
 

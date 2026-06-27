@@ -53,7 +53,6 @@ namespace axflow {
 
         // Ensure our output tensor is allocated
         out_tensor.data.resize(out_tensor.numel());
-
         // 4. Zero-Loop Layout Routing
         if (is_nhwc) {
             // cv::Mat is natively NHWC! We can literally just memcpy it over.

@@ -1,0 +1,15 @@
+inference_type: "axruntime"
+
+preprocessing:
+  resize_mode: stretch
+  normalize: false
+  input_is_bgr: true
+
+axruntime_inference:
+  model_dir: assets/models/detection/axruntime/yolov8s-coco/1
+  num_cores: 1
+
+postamble:
+  enabled: true
+  graph_path: postprocess_graph.onnx
+  intra_op_num_threads: 4
